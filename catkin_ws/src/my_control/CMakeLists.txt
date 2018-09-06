@@ -20,7 +20,7 @@ include_directories(
  include
   /usr/local/include
 )
-## System dependencies are found with CMake's conventions
+# System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
 

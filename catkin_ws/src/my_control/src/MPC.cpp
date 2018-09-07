@@ -1,42 +1,41 @@
 #include "MPC.h"
 #include "qpOASES.hpp"
-
 extern SQProblem solver;
 extern bool update;
-MPC::MPC(double ts_set,double N_sim_set,double Nu_set,double Nx_set,double Nc_set)
+MPC::MPC(double ts_set, int N_sim_set,int Nu_set, int Nx_set, int Nc_set, double v_r_, double fai_r_, double a_r_, double delta_r_)
 {
 	cout<<"MPC initialing"<<endl;
-	delta_r=0.0;
-	a_r=0.0;
-	fai_r=0.0;
-	v_r=1.0;
-	Ts=ts_set;
-	l=1.0;
-	N_sim=N_sim_set;
-	Nu=Nu_set;
-	Nx=Nx_set;
-	count=0;
-	Nc=Nc_set;
-        //构造planning出来的参考
-	path_type path_test(0.0,0.0,0.0,0.0);
-        for(int i=0;i<200;i++)
+	delta_r = delta_r_;
+	a_r = a_r_;
+	fai_r = fai_r_;
+	v_r = v_r_;
+	Ts = ts_set;
+	N_sim = N_sim_set;
+	Nu = Nu_set;
+	Nx = Nx_set;
+	Nc = Nc_set;
+	l = 1.0;
+	count = 0;
+        
+	//构造planning path
+	path_type path_ref_point(0.0,0.0,0.0,0.0);
+        for(int i=0;i<1000;i++)
 	{
-		path_test.x=i*Ts;
-		path_test.y=2.0;
-		path_test.theta=0.0;
-
-		path_test.v=1.0;
-                posi_ref.push_back(path_test);
+		path_ref_point.x = i*Ts/10.0;
+		path_ref_point.y = 10.0;
+		path_ref_point.theta = fai_r;
+		path_ref_point.v = v_r;
+                path_ref.push_back(path_ref_point);
         }
-	x_piao(0)=posi_ref[0].x;
-        x_piao(1)=posi_ref[0].y;
-	x_piao(2)=posi_ref[0].theta;
-	x_piao(3)=posi_ref[0].v;
+
+	//初始位置0,0,pi/2,0
+	set_car_pose(0.0, 0.0, pi/2.0, 0.0);
+	
 	//构造矩阵Q，R,A,B
         Q=MatrixXd::Identity(Nx*N_sim,Nx*N_sim);
         for(int k=0;k<Q.rows();k++)
         {
-               	if(k%Nx == Nx-1)
+               	if((k%Nx == Nx-1)||(k%Nx == Nx-2))
                     	Q(k,k)=0.5;
         }
         R=MatrixXd::Identity(Nu*Nc,Nu*Nc);
@@ -45,18 +44,26 @@ MPC::MPC(double ts_set,double N_sim_set,double Nu_set,double Nx_set,double Nc_se
 	tmp=MatrixXd::Zero(Nx,Nu);
 	tmp(3,0)=Ts;
 
-	nWSR = 1000;
-	
+	//real_t for qpOASES
+	nWSR = 1000;	
 	H_real = new double[Nc*Nu*Nc*Nu];
-
         g = new double[Nc*Nu];
-
 	lb = new double[Nu*Nc];
 	ub = new double[Nu*Nc];
-	lb[0] = -1.0;
-	lb[1] = -1.0;
-	ub[0] = 1.0;
-	ub[1] = 1.0;
+	for(int i=0;i<Nu*Nc;i++)
+	{
+		if(i%2==0)
+		{
+			lb[i] = -1.0;
+			ub[i] = 1.0;
+		}
+		else
+		{
+			lb[i] = -1.0;
+			ub[i] = 1.0;
+		}
+			
+	}
 	a_delta = new double[Nu*Nc];
 }
 
@@ -67,27 +74,19 @@ MPC::~MPC()
 	delete[] g;
 	delete[] lb;
 	delete[] ub;
-	//delete[] a_delta;
-}
-
-void MPC::run()
-{
-	//ros::Timer timer = n.createTimer(ros::Duration(Ts), &timer_callback, );
-	//while(ros::ok())
-	//{	
-	//	if(count>=100)
-	//		break;
-	//}
+	delete[] a_delta;
 }
 
 void MPC::timer_callback(const ros::TimerEvent& event)
 {
         cout<<"mpc is being calculated"<<endl;
-	cout<<"nwsr is"<<nWSR<<endl;
+	
 	nWSR=1000;
-	v_r=posi_ref[count].v;
-	fai_r=posi_ref[count].theta;
+	v_r=path_ref[count].v;
+	fai_r=path_ref[count].theta;
+	
 	tmp(2,1)=v_r*Ts/l/pow(cos(delta_r),2);
+	
 	for(int i=0;i<N_sim;i++)
 	{
 		A_cell(i*Nx,0)=1;
@@ -118,49 +117,31 @@ void MPC::timer_callback(const ros::TimerEvent& event)
         }
 
 
-        cout<<"B_cell"<<B_cell.rows()<<B_cell.cols()<<"is esbalished"<<endl;
-        cout<<"Q is"<<Q.rows()<<Q.cols()<<endl;
-	cout<<"R is"<<R.rows()<<R.cols()<<endl;
         H = 2*(B_cell.transpose()*Q*B_cell+R);
 
-        cout<<"Matrix H is esbalished"<<endl;
-
         f = 2*B_cell.transpose()*Q*A_cell*x_piao;
-        cout<<"vector f is esbalished"<<endl;
-	cout<<f[0]<<" "<<f[1]<<endl;
-	cout<<"x_piao is"<<endl;
-	cout<<x_piao(0)<<" "<<x_piao(1)<<" "<<x_piao(2)<<" "<<x_piao(3)<<endl;
 	
         Map<MatrixXd>(H_real,H.rows(),H.cols())=H;
-        Map<VectorXd>(g,f.rows(),f.cols())=f;
-	cout<<"H,g for QP solver is esbaliashed"<<endl;
-	cout<<"QP solver is being calculated"<<endl;
+        
+	Map<VectorXd>(g,f.rows(),f.cols())=f;
 
-	cout<<"H_real is"<<endl;
-	cout<< H_real[0]<<" "<<H_real[1]<<" "<<H_real[2]<<" "<<H_real[3]<<endl;
-	cout<<"g is"<<endl;
-	cout<< g[0]<<" "<<g[1]<<endl;
-	cout<<"lb is"<<endl;
-	cout<<lb[0]<<" "<<lb[1]<<endl;
-	cout<<"ub is"<<endl;
-	cout<<ub[0]<<" "<<ub[1]<<endl;
-	cout<<"nwsr is"<<nWSR<<endl;
-	//int result;
 	if(count==0)
         	solver.init( H_real,g,A_test,lb,ub,0,0,nWSR,0 );
 	else
 		solver.hotstart(H_real,g,A_test,lb,ub,0,0,nWSR,0);
-		//solver.init( H_real,g,A_test,lb,ub,0,0, nWSR,0 );
-  	//cout<<"return value is"<<result<<endl;
+	
 	cout<<"QP solver is calculated"<<endl;
-	cout<<"nwsr is"<<nWSR<<endl;
+
         solver.getPrimalSolution( a_delta );
+
 	cout<<"a_delta optimized is"<<a_delta[0]<<" "<<a_delta[1]<<endl;
+
 	cout<<"running car model"<<endl;
-	cout<<"nwsr is"<<nWSR<<endl;
         
 	count++;
+	
 	update = true;
+	
 	cout<<"finished one MPC"<<endl;  
 }
 int MPC::get_count()
@@ -172,17 +153,35 @@ int MPC::get_count()
 void MPC::get_mpc_optimized(double& a_delta_real_a, double& a_delta_real_delta)
 {
 	a_delta_real_a = a_delta[0] + a_r;
-
 	a_delta_real_delta = a_delta[1] + delta_r; 
-
 	cout<<"a_delta_real is"<<a_delta_real_a<<" "<<a_delta_real_delta<<endl;
 }
 
-void MPC::set_x_piao(double x_real,double y_real, double theta_real, double v_real)
+void MPC::set_car_pose(double x_real,double y_real, double theta_real, double v_real)
 {
-	x_piao(0) = x_real - posi_ref[count].x;
-        x_piao(1) = y_real - posi_ref[count].y;
-        x_piao(2) = theta_real - posi_ref[count].theta;
-        x_piao(3) = v_real - posi_ref[count].v;
+	x_piao(0) = x_real - path_ref[count].x;
+        x_piao(1) = y_real - path_ref[count].y;
+        x_piao(2) = theta_real - path_ref[count].theta;
+        x_piao(3) = v_real - path_ref[count].v;
+	cout<<"car_pose error is"<<endl;
+	cout<<x_piao(0)<<" "<<x_piao(1)<<" "<<x_piao(2)<<" "<<x_piao(3)<<endl; 
+}
 
+
+void MPC::set_limit_a_delta(double a_min, double a_max, double delta_min, double delta_max)
+{
+	lb[0] = a_min;
+	lb[1] = delta_min;
+	ub[0] = a_max;
+	ub[1] = delta_max;	
+}
+
+void MPC::set_car_parameter(double l)
+{
+	this->l = l;	
+}
+
+void MPC::set_path_ref(vector<path_type>& path_ref)
+{
+	this->path_ref = path_ref; 
 }

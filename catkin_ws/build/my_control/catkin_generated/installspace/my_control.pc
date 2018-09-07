@@ -3,6 +3,6 @@ prefix=/home/debbin/catkin_ws/install
 Name: my_control
 Description: Description of my_control
 Version: 0.0.0
-Cflags: -I/home/debbin/catkin_ws/install/include
+Cflags: 
 Libs: -L/home/debbin/catkin_ws/install/lib 
 Requires: message_runtime

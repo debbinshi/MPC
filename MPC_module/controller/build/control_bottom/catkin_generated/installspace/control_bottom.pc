@@ -1,0 +1,8 @@
+prefix=/home/debbin/gitlab/controller/install
+
+Name: control_bottom
+Description: Description of control_bottom
+Version: 0.0.0
+Cflags: -I/home/debbin/gitlab/controller/install/include
+Libs: -L/home/debbin/gitlab/controller/install/lib 
+Requires: 

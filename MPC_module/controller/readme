@@ -1,0 +1,14 @@
+1.controller代码架构：
+该controller包为sdk的上层控制代码包；包含两个msg包，和两个控制包control_top control_bottom;
+controller_msgs 为本包自己的节点通信所用的msg;dbw_mkz_msgs为与下面sdk通信所需的msg;
+control_top包为MPC控制算法，接收定位的x,y,theta, 输出加速度和前轮转角指令；
+control_bottom包为将MPC和sdk连接的代码包，接收MPC的指令以及sdk的车的信息，发出BrakeCmd, ThottleCmd, SteeringCmd给sdk去执行
+
+2.整个代码架构：
+ros层：control_top <--->  control_bottom <---> sdk中dbw_ros/dbw_mkz_can <---> dataspeed_can/dataspeed_can_usb/src/CanDriver.cpp <--->
+底层can总线驱动： dataspeed_can/dataspeed_can_usb/src/CanUsb.cpp <---> lusb/src/UsbDevice.cpp
+
+3.目前还没有加入档位操作，只是控制了油门、刹车、方向盘
+ 
+
+

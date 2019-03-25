@@ -1,0 +1,2 @@
+control_bottom:control_top:controller_msgs:dbw_mkz_msgs
+-DCATKIN_DEVEL_PREFIX=/home/debbin/gitlab/controller/devel -DCMAKE_INSTALL_PREFIX=/home/debbin/gitlab/controller/install -G Unix Makefiles

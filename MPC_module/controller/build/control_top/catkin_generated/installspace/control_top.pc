@@ -1,0 +1,8 @@
+prefix=/home/debbin/gitlab/controller/install
+
+Name: control_top
+Description: Description of control_top
+Version: 0.0.0
+Cflags: 
+Libs: -L/home/debbin/gitlab/controller/install/lib 
+Requires: message_runtime

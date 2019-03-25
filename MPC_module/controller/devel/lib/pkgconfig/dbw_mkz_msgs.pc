@@ -1,0 +1,8 @@
+prefix=/home/debbin/gitlab/controller/devel
+
+Name: dbw_mkz_msgs
+Description: Description of dbw_mkz_msgs
+Version: 1.0.11
+Cflags: -I/home/debbin/gitlab/controller/devel/include
+Libs: -L/home/debbin/gitlab/controller/devel/lib 
+Requires: message_runtime std_msgs geometry_msgs

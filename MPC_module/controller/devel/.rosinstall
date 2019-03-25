@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/debbin/gitlab/controller/devel/setup.sh

@@ -1,0 +1,2 @@
+my_control:sim_msgs
+-DCATKIN_DEVEL_PREFIX=/home/debbin/catkin_ws/devel -DCMAKE_INSTALL_PREFIX=/home/debbin/catkin_ws/install -G Unix Makefiles

@@ -1,0 +1,8 @@
+prefix=/home/debbin/catkin_ws/devel
+
+Name: my_control
+Description: Description of my_control
+Version: 0.0.0
+Cflags: 
+Libs: -L/home/debbin/catkin_ws/devel/lib 
+Requires: message_runtime

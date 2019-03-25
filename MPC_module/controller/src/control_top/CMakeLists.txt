@@ -143,7 +143,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
- add_executable(${PROJECT_NAME}_node src/main.cpp src/MPC.cpp)
+ add_executable(${PROJECT_NAME}_node src/main.cpp src/mpc.cpp src/mpc_improve.cpp)
  add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
  add_dependencies(${PROJECT_NAME}_node ${controller_msgs_EXPORTED_TARGETS})
 

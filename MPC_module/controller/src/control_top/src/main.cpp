@@ -1,4 +1,5 @@
-#include "MPC.h"
+#include "mpc.h"
+#include "mpc_improve.h"
 #include "std_msgs/Float64.h"
 #include "controller_msgs/car_location.h"
 #include "controller_msgs/result.h"
@@ -60,9 +61,10 @@ int main(int argc, char** argv)
     ros::Publisher result_pub = n.advertise<controller_msgs::result>("control_top_result",10);
     ros::Subscriber vel_sub = n.subscribe("control_bottom/vel_current",1,vel_callback);
     ros::Subscriber location_sub = n.subscribe("location/car_location",1,location_callback);
-    //需要根据实际定位的信息改写
 
     MPC controller(T_cal, np_set, nc_set);
+//    MPC_improve controller(T_cal, np_set, nc_set);
+    
     timer = n.createTimer(ros::Duration(T_cal), &MPC::timer_callback, &controller);
 
     controller_msgs::result MPC_result;

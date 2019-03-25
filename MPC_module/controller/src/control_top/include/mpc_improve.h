@@ -1,5 +1,4 @@
-#ifndef __MPC_H_
-#define __MPC_H_
+#pragma once
 
 #include <qpOASES.hpp>
 #include <Eigen/Dense>
@@ -9,25 +8,25 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include "traj_ref.h"
+#include <mvp_msgs/planning.h>
+#include <pos.h> 
 USING_NAMESPACE_QPOASES;
 using namespace Eigen;
 using namespace std;
 
 
-class MPC {
+class MPC_improve {
 public:
-    MPC(double dt, int np_set, int nc_set);
-    ~MPC();
+    MPC_improve(double dt, int np_set, int nc_set);
+    ~MPC_improve();
 
-    void update(double cur_px, double cur_py, double cur_theta, double cur_v);
-    void set_traj_ref(vector<traj_type>& traj_ref);
+    void update();
+    void set_traj_ref(mvp_msgs::trajectory traj_ref);
     int get_count();
     void get_MPC_result(double& a, double& delta, double& vel);
     bool get_update_state();
     void set_update_state(bool update);
     void set_car_state(double x_real, double y_real, double theta_real, double v_real);
-    void timer_callback(const ros::TimerEvent& event);
     ofstream out_;
     string text_;
     double error_sum_;
@@ -57,11 +56,13 @@ private:
     real_t* g;
     real_t* lb;
     real_t* ub;
+    real_t* Alb;
+    real_t* Aub;
     real_t* A_delta;
     real_t* A_test;
 
 //tranjectory reference
-    vector<traj_type> traj_ref_;
+    mvp_msgs::trajectory traj_ref_;
 
     bool update_;
 
@@ -70,5 +71,3 @@ private:
     double delta_old_; 
    
 };
-
-#endif
